@@ -272,6 +272,7 @@ table.minimal tfoot td {
 <div style="width:32px; height:32px; background:#111; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800;">1</div>
 <div class="dt-title" style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Datos de Transporte</div>
 <div class="dt-divider" style="flex:1; height:1px; background:#e5e7eb; margin-left:12px;"></div>
+<button onclick="abrirOpciones()" style="padding:8px 14px; border-radius:8px; font-weight:700; background:#111827; color:white; font-size:12px; display:flex; align-items:center; gap:6px; white-space:nowrap;">⚙️ Opciones</button>
 </div>
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 <div>
@@ -294,23 +295,6 @@ table.minimal tfoot td {
 </div>
 </div>
 
-<div class="no-print dt-card" style="background:white; border:2px solid #16a34a; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-<div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-<div style="width:32px; height:32px; background:#16a34a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800;">🔄</div>
-<div style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Sincronización entre dispositivos</div>
-<span id="badgeSync" style="margin-left:auto;font-size:10px;font-weight:800;padding:4px 10px;border-radius:999px;background:#fee2e2;color:#991b1b">DESCONECTADO</span>
-</div>
-<div style="font-size:11px;color:#6b7280;margin-bottom:10px">Escribe el mismo código en el celular y en la laptop para cargar el Excel en un dispositivo y verlo automáticamente en el otro.</div>
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-<div style="grid-column:span 1">
-<label class="dt-label" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#6b7280; display:block; margin-bottom:6px;">Código de sincronización</label>
-<input style="width:100%; padding:10px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; font-weight:700; text-transform:uppercase; outline:none;" id="f_sync_code" placeholder="EJ: DOFFA-01" type="text"/>
-</div>
-<button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#16a34a; color:white; font-size:12px;" onclick="conectarSync()">🔗 Conectar</button>
-<button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#e5e7eb; color:#111827; font-size:12px;" onclick="desconectarSync()">⏻ Desconectar</button>
-</div>
-<button style="margin-top:10px; width:100%; padding:8px 12px; border-radius:8px; font-weight:700; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; font-size:11px;" onclick="borrarNube()">🗑️ Borrar base y tabla de la nube</button>
-<div id="syncStatus" style="font-size:11px;font-weight:700;color:#6b7280;margin-top:8px">Sin conectar</div>
 </div>
 
 <div class="glass rounded-2xl p-6 mb-6 shadow-lg no-print">
@@ -326,44 +310,91 @@ table.minimal tfoot td {
 </div>
 </div>
 <div class="flex flex-wrap gap-3">
-<button id="downloadTemplateBtn" class="btn-secondary bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" title="Descargar plantilla Excel para carga de base de datos">
-<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-          Descargar Plantilla
-        </button>
-<label class="btn-secondary bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold cursor-pointer flex items-center gap-2" for="fileInput">
-<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-          Cargar Base de Datos
-        </label>
-<input accept=".xlsx,.xls,.csv" class="hidden" id="fileInput" type="file"/>
 <button class="btn-secondary bg-slate-600 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" id="printBtn">
 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
 </svg>
           Imprimir
         </button>
-<button class="btn-secondary bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" id="exportBtn">
-<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-          Exportar Excel
-        </button>
-<button class="btn-secondary bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" id="clearBtn">
-<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-          Limpiar Tabla
-        </button>
-<button class="btn-secondary bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" id="clearDbBtn">
-<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-            Borrar Base de Datos
-        </button>
 </div>
 <div class="mt-4 text-sm font-medium text-slate-600" id="dbStatus"></div>
 </div>
+<!-- MODAL OPCIONES -->
+<div class="no-print" id="opcionesModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:white; border-radius:12px; width:100%; max-width:460px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.2); animation:modalIn 0.2s ease;">
+    <div style="padding:18px 20px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between;">
+      <div style="font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">⚙️ Opciones</div>
+      <button onclick="cerrarOpciones()" style="border:none; background:none; font-size:20px; font-weight:800; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+    <div style="padding:20px;">
+
+      <div style="border:2px solid #16a34a; border-radius:12px; padding:16px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <div style="width:32px; height:32px; background:#16a34a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800;">🔄</div>
+          <div style="font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Sincronización entre dispositivos</div>
+          <span id="badgeSync" style="margin-left:auto;font-size:10px;font-weight:800;padding:4px 10px;border-radius:999px;background:#fee2e2;color:#991b1b">DESCONECTADO</span>
+        </div>
+        <div style="font-size:11px;color:#6b7280;margin-bottom:10px">Escribe el mismo código en el celular y en la laptop para cargar el Excel en un dispositivo y verlo automáticamente en el otro.</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+          <div style="grid-column:span 1">
+            <label class="dt-label" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#6b7280; display:block; margin-bottom:6px;">Código de sincronización</label>
+            <input style="width:100%; padding:10px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; font-weight:700; text-transform:uppercase; outline:none;" id="f_sync_code" placeholder="EJ: DOFFA-01" type="text"/>
+          </div>
+          <button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#16a34a; color:white; font-size:12px;" onclick="conectarSync()">🔗 Conectar</button>
+          <button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#e5e7eb; color:#111827; font-size:12px;" onclick="desconectarSync()">⏻ Desconectar</button>
+        </div>
+        <button style="margin-top:10px; width:100%; padding:8px 12px; border-radius:8px; font-weight:700; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; font-size:11px;" onclick="borrarNube()">🗑️ Borrar base y tabla de la nube</button>
+        <div id="syncStatus" style="font-size:11px;font-weight:700;color:#6b7280;margin-top:8px">Sin conectar</div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button id="downloadTemplateBtn" class="btn-secondary bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" title="Descargar plantilla Excel para carga de base de datos">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          Descargar Plantilla
+        </button>
+        <label class="btn-secondary bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold cursor-pointer flex items-center gap-2 justify-center" for="fileInput">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          Cargar Base de Datos
+        </label>
+        <input accept=".xlsx,.xls,.csv" class="hidden" id="fileInput" type="file"/>
+        <button class="btn-secondary bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" id="exportBtn">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          Exportar Excel
+        </button>
+        <button class="btn-secondary bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" id="clearBtn">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          Limpiar Tabla
+        </button>
+        <button class="btn-secondary bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" id="clearDbBtn">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          Borrar Base de Datos
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirOpciones(){
+  document.getElementById('opcionesModal').style.display='flex';
+}
+function cerrarOpciones(){
+  document.getElementById('opcionesModal').style.display='none';
+}
+document.getElementById('opcionesModal').addEventListener('click', function(e){
+  if(e.target === this) cerrarOpciones();
+});
+</script>
+
 <div class="print-header">
 <h2 class="text-2xl font-bold text-center mb-2">RECEPCION ERRORES DOFFA</h2>
 <div class="grid grid-cols-4 gap-4 text-sm mb-4">
@@ -992,6 +1023,7 @@ setTimeout(syncDisplay, 300);
     </div>
   </div>
 </div>
+
 
 <style>
 @keyframes modalIn { from { transform:scale(0.95); opacity:0; } to { transform:scale(1); opacity:1; } }
