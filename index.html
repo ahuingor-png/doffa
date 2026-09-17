@@ -620,6 +620,25 @@ function updateDBStatus(msg, type = 'info') {
 }
 
 // CARGA DE EXCEL
+function normalizarTexto(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
+    .toUpperCase()
+    .replace(/[°º]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Busca, dentro de las llaves de una fila, la primera que contenga alguna de las palabras clave
+function encontrarColumna(row, palabrasClave) {
+  const claves = Object.keys(row);
+  for (const clave of claves) {
+    const norm = normalizarTexto(clave);
+    if (palabrasClave.some(p => norm.includes(p))) return clave;
+  }
+  return null;
+}
+
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -630,21 +649,58 @@ fileInput.addEventListener('change', (e) => {
       const data = new Uint8Array(evt.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+      // 1) Leemos como matriz cruda para encontrar la fila real de encabezados,
+      //    por si hay títulos, logos o filas en blanco arriba.
+      const filas = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+      let idxEncabezado = filas.findIndex(fila =>
+        fila.some(celda => {
+          const n = normalizarTexto(celda);
+          return n.includes('PALET') || n.includes('FOLIO') || n.includes('ORDEN');
+        })
+      );
+      if (idxEncabezado === -1) idxEncabezado = 0; // si no la detecta, asume la primera fila
+
+      // 2) Reconstruimos los datos usando esa fila como encabezado real
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { range: idxEncabezado, defval: '' });
+
+      if (!jsonData.length) {
+        updateDBStatus('El archivo no tiene filas de datos debajo del encabezado', 'error');
+        fileInput.value = '';
+        return;
+      }
+
+      // 3) Detectamos las columnas reales por palabras clave, tolerando tildes/mayúsculas/símbolos
+      const colFolio = encontrarColumna(jsonData[0], ['PALET', 'FOLIO', 'ORDEN']);
+      const colCant = encontrarColumna(jsonData[0], ['CANT', 'BULTO']);
+      const colMotivo = encontrarColumna(jsonData[0], ['MOTIVO']);
+
+      if (!colFolio) {
+        const encabezadosVistos = Object.keys(jsonData[0]).join(', ');
+        updateDBStatus(`No se encontró una columna de N° PALET / FOLIO. Encabezados detectados: ${encabezadosVistos}`, 'error');
+        fileInput.value = '';
+        return;
+      }
 
       masterDB = jsonData.map(row => {
-        const folio = row['N° PALET'] || row['FOLIO'] || row['Folio'] || row['No PALET'];
-        const cant = row['CANT.'] || row['BULTOS'] || row['Cant'] || row['CANT'];
-        const motivo = row['MOTIVO (RECHAZO)'] || row['MOTIVO'] || row['Motivo'] || row['MOTIVO RECHAZO'];
+        const folio = colFolio ? row[colFolio] : undefined;
+        const cant = colCant ? row[colCant] : undefined;
+        const motivo = colMotivo ? row[colMotivo] : undefined;
         return { 'N° PALET': folio, 'CANT.': cant, 'MOTIVO (RECHAZO)': motivo };
-      }).filter(r => r['N° PALET']);
+      }).filter(r => r['N° PALET'] !== undefined && String(r['N° PALET']).trim() !== '');
+
+      if (!masterDB.length) {
+        updateDBStatus('Se encontró la columna pero todas sus filas están vacías', 'error');
+        fileInput.value = '';
+        return;
+      }
 
       localStorage.setItem('doffa_masterDB', JSON.stringify(masterDB));
       updateDBStatus(`Base cargada: ${masterDB.length} registros`, 'success');
       empujarEstadoRemoto();
       fileInput.value = '';
     } catch (err) {
-      updateDBStatus('Error al leer el archivo', 'error');
+      updateDBStatus('Error al leer el archivo: ' + err.message, 'error');
     }
   };
   reader.readAsArrayBuffer(file);
