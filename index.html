@@ -78,6 +78,41 @@ setTimeout(initHist, 300);
     transform: translateY(-1px);
   }
 
+  .opt-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+  }
+  .opt-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+  .opt-btn .opt-icon {
+    color: #64748b;
+  }
+  .opt-btn-danger {
+    color: #b91c1c;
+    border-color: #fecaca;
+  }
+  .opt-btn-danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+  }
+  .opt-btn-danger .opt-icon {
+    color: #dc2626;
+  }
+
   .input-focus:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
@@ -233,6 +268,7 @@ table.minimal tfoot td {
   font-size: 11px;
 }
 .glass { box-shadow: none !important; border: 1px solid #e5e7eb !important; border-radius: 8px !important; }
+.doc-simple { position: relative; }
 @media print {
   .doc-simple { display: block !important; }
   .doc-simple-grid { display: grid !important; }
@@ -240,12 +276,36 @@ table.minimal tfoot td {
   #darkModeToggle { display: none !important; }
   .no-print { display: none !important; }
   .print-header { display: none !important; }
-  body { padding: 0 !important; }
+  body { padding: 0 !important; min-height: auto !important; height: auto !important; }
+  html { height: auto !important; }
 }
+</style>
+<style>
+/* SELLO */
+.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:6px; padding:12px 30px 14px; z-index:50; border:2.5px solid #000; box-shadow:0 0 0 1.5px #000 inset; color:#000; background:#fff}
+.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:19px; letter-spacing:0.5px; text-transform:uppercase; white-space:nowrap}
+.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:9px; letter-spacing:2.5px; text-transform:uppercase; margin-top:2px; white-space:nowrap}
+.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:12.5px; margin-top:7px; white-space:nowrap}
+.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:40px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.15) scaleY(1.05); margin-top:6px; white-space:nowrap}
+.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:6.5px; letter-spacing:0.3px; text-transform:uppercase; line-height:1.2; margin-top:7px; width:220px; margin-left:auto; margin-right:auto}
+.sello-btn{padding:8px 10px;border-radius:8px;font-size:9px;font-weight:800;text-transform:uppercase;border:2px solid #000;background:#fff;color:#000;cursor:pointer}
+.preview-bar{position:fixed;top:0;left:0;right:0;background:#111827;color:#fff;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;font-size:12px;z-index:10000;font-family:Arial,sans-serif}
+.preview-bar button{border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;margin-left:8px}
+body.print-preview-mode{padding-top:56px !important}
+body.print-preview-mode .no-print{display:none !important}
+body.print-preview-mode .doc-simple{display:block !important}
+@media print{ .preview-bar{display:none !important} }
 </style>
 </head>
 
 <body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen"><button id="darkModeToggle" style="position:fixed; top:15px; right:15px; z-index:9999; padding:6px 12px; border-radius:6px; border:none; background:#222; color:white; cursor:pointer; font-size:12px;">🌙</button>
+<div class="preview-bar" id="previewBar">
+  <span>🖱️ Arrastra el sello a la posición que quieras antes de imprimir.</span>
+  <div>
+    <button onclick="confirmPrintDoffa()" style="background:#f97316;color:#fff">🖨️ Imprimir</button>
+    <button onclick="exitPreviewDoffa()" style="background:#374151;color:#fff">✕ Cerrar</button>
+  </div>
+</div>
 <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
 <header style="border-bottom:1px solid #000; padding:16px 0; margin-bottom:24px; background:white; display:flex; justify-content:space-between; align-items:center;">
 <div style="display:flex; align-items:center; gap:16px;">
@@ -257,7 +317,7 @@ table.minimal tfoot td {
 </div>
 </header>
 
-<div class="doc-simple">
+<div class="doc-simple sello-hoja">
   <div class="doc-simple-grid">
     <div><span class="lbl">Transporte</span><span class="val" id="displayTransporte">LIMA SUR</span></div>
     <div><span class="lbl">Placa</span><span class="val" id="displayPlaca">BOI866</span></div>
@@ -309,7 +369,12 @@ table.minimal tfoot td {
 </div>
 </div>
 </div>
-<div class="flex flex-wrap gap-3">
+<div class="flex flex-wrap gap-3 items-center">
+<div style="display:flex;gap:4px" class="no-print">
+  <button class="sello-btn" data-sello="RECIBIDO" onclick="seleccionarSelloDoffa('RECIBIDO')">RECIBIDO</button>
+  <button class="sello-btn" data-sello="RECHAZADO" onclick="seleccionarSelloDoffa('RECHAZADO')">RECHAZADO</button>
+  <button class="sello-btn" data-sello="OBSERVADO" onclick="seleccionarSelloDoffa('OBSERVADO')">OBSERVADO</button>
+</div>
 <button class="btn-secondary bg-slate-600 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" id="printBtn">
 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -328,57 +393,72 @@ table.minimal tfoot td {
     </div>
     <div style="padding:20px;">
 
-      <div style="border:2px solid #16a34a; border-radius:12px; padding:16px; margin-bottom:16px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-          <div style="width:32px; height:32px; background:#16a34a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800;">🔄</div>
-          <div style="font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Sincronización entre dispositivos</div>
-          <span id="badgeSync" style="margin-left:auto;font-size:10px;font-weight:800;padding:4px 10px;border-radius:999px;background:#fee2e2;color:#991b1b">DESCONECTADO</span>
-        </div>
-        <div style="font-size:11px;color:#6b7280;margin-bottom:10px">Escribe el mismo código en el celular y en la laptop para cargar el Excel en un dispositivo y verlo automáticamente en el otro.</div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-          <div style="grid-column:span 1">
-            <label class="dt-label" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#6b7280; display:block; margin-bottom:6px;">Código de sincronización</label>
-            <input style="width:100%; padding:10px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; font-weight:700; text-transform:uppercase; outline:none;" id="f_sync_code" placeholder="EJ: DOFFA-01" type="text"/>
-          </div>
-          <button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#16a34a; color:white; font-size:12px;" onclick="conectarSync()">🔗 Conectar</button>
-          <button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#e5e7eb; color:#111827; font-size:12px;" onclick="desconectarSync()">⏻ Desconectar</button>
-        </div>
-        <button style="margin-top:10px; width:100%; padding:8px 12px; border-radius:8px; font-weight:700; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; font-size:11px;" onclick="borrarNube()">🗑️ Borrar base y tabla de la nube</button>
-        <div id="syncStatus" style="font-size:11px;font-weight:700;color:#6b7280;margin-top:8px">Sin conectar</div>
-      </div>
+      <button class="opt-btn" id="openSyncBtn" onclick="abrirSync()" style="margin-bottom:16px;">
+        <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        Sincronización entre dispositivos
+        <span id="badgeSync" style="margin-left:auto;font-size:10px;font-weight:800;padding:4px 10px;border-radius:999px;background:#fee2e2;color:#991b1b">DESCONECTADO</span>
+      </button>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <button id="downloadTemplateBtn" class="btn-secondary bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" title="Descargar plantilla Excel para carga de base de datos">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        <button id="downloadTemplateBtn" class="opt-btn" title="Descargar plantilla Excel para carga de base de datos">
+          <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
           Descargar Plantilla
         </button>
-        <label class="btn-secondary bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold cursor-pointer flex items-center gap-2 justify-center" for="fileInput">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+
+        <label id="dropZone" for="fileInput" style="border:2px dashed #cbd5e1; border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; text-align:center; background:#f8fafc; transition:background .15s,border-color .15s;">
+          <svg class="h-6 w-6" style="color:#475569" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
           </svg>
-          Cargar Base de Datos
+          <div style="font-weight:600;font-size:13px;color:#334155">Cargar Base de Datos</div>
+          <div style="font-size:11px;color:#94a3b8">Arrastra tu Excel aquí o haz clic para buscar</div>
         </label>
         <input accept=".xlsx,.xls,.csv" class="hidden" id="fileInput" type="file"/>
-        <button class="btn-secondary bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" id="exportBtn">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+
+        <button class="opt-btn" id="exportBtn">
+          <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
           </svg>
           Exportar Excel
         </button>
-        <button class="btn-secondary bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" id="clearBtn">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <button class="opt-btn" id="clearBtn">
+          <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
           </svg>
           Limpiar Tabla
         </button>
-        <button class="btn-secondary bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 justify-center" id="clearDbBtn">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <button class="opt-btn opt-btn-danger" id="clearDbBtn">
+          <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
           </svg>
           Borrar Base de Datos
         </button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SINCRONIZACIÓN -->
+<div class="no-print" id="syncModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:white; border-radius:12px; width:100%; max-width:420px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.2); animation:modalIn 0.2s ease;">
+    <div style="padding:18px 20px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between;">
+      <div style="font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">🔄 Sincronización entre dispositivos</div>
+      <button onclick="cerrarSync()" style="border:none; background:none; font-size:20px; font-weight:800; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+    <div style="padding:20px;">
+      <div style="font-size:11px;color:#6b7280;margin-bottom:10px">Escribe el mismo código en el celular y en la laptop para cargar el Excel en un dispositivo y verlo automáticamente en el otro.</div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+        <div style="grid-column:span 1">
+          <label class="dt-label" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#6b7280; display:block; margin-bottom:6px;">Código de sincronización</label>
+          <input style="width:100%; padding:10px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; font-weight:700; text-transform:uppercase; outline:none;" id="f_sync_code" placeholder="EJ: DOFFA-01" type="text"/>
+        </div>
+        <button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#334155; color:white; font-size:12px;" onclick="conectarSync()">🔗 Conectar</button>
+        <button style="padding:10px 12px; border-radius:8px; font-weight:700; background:#e5e7eb; color:#111827; font-size:12px;" onclick="desconectarSync()">⏻ Desconectar</button>
+      </div>
+      <button style="margin-top:10px; width:100%; padding:8px 12px; border-radius:8px; font-weight:700; background:#fff; color:#991b1b; border:1px solid #fecaca; font-size:11px;" onclick="borrarNube()">🗑️ Borrar base y tabla de la nube</button>
+      <div id="syncStatus" style="font-size:11px;font-weight:700;color:#6b7280;margin-top:8px">Sin conectar</div>
     </div>
   </div>
 </div>
@@ -390,6 +470,15 @@ function abrirOpciones(){
 function cerrarOpciones(){
   document.getElementById('opcionesModal').style.display='none';
 }
+function abrirSync(){
+  document.getElementById('syncModal').style.display='flex';
+}
+function cerrarSync(){
+  document.getElementById('syncModal').style.display='none';
+}
+document.getElementById('syncModal').addEventListener('click', function(e){
+  if(e.target === this) cerrarSync();
+});
 document.getElementById('opcionesModal').addEventListener('click', function(e){
   if(e.target === this) cerrarOpciones();
 });
@@ -639,8 +728,7 @@ function encontrarColumna(row, palabrasClave) {
   return null;
 }
 
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
+function procesarArchivoExcel(file) {
   if (!file) return;
 
   const reader = new FileReader();
@@ -704,7 +792,36 @@ fileInput.addEventListener('change', (e) => {
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+fileInput.addEventListener('change', (e) => {
+  procesarArchivoExcel(e.target.files[0]);
 });
+
+// ARRASTRAR Y SOLTAR EXCEL
+const dropZone = document.getElementById('dropZone');
+if (dropZone) {
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.style.borderColor = '#16a34a';
+      dropZone.style.background = '#f0fdf4';
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.style.borderColor = '#cbd5e1';
+      dropZone.style.background = '#f8fafc';
+    });
+  });
+  dropZone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) procesarArchivoExcel(file);
+  });
+}
 
 // DESCARGAR PLANTILLA EXCEL
 document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
@@ -971,7 +1088,120 @@ printBtn.addEventListener('click', () => {
   document.getElementById('printPlaca').textContent = placaInput.value || '-';
   document.getElementById('printResponsable').textContent = responsableInput.value || '-';
   document.getElementById('printPuerta').textContent = puertaInput.value || '-';
+  document.getElementById('displayTransporte').textContent = transporteInput.value || '-';
+  document.getElementById('displayPlaca').textContent = placaInput.value || '-';
+  document.getElementById('displayResponsable').textContent = responsableInput.value || '-';
+  document.getElementById('displayPuerta').textContent = puertaInput.value || '-';
+  document.body.classList.add('print-preview-mode');
+  document.getElementById('previewBar').style.display = 'flex';
+});
+
+function exitPreviewDoffa() {
+  document.body.classList.remove('print-preview-mode');
+  document.getElementById('previewBar').style.display = 'none';
+}
+
+function confirmPrintDoffa() {
+  document.body.classList.remove('print-preview-mode');
+  document.getElementById('previewBar').style.display = 'none';
   window.print();
+  window.onafterprint = function() {
+    document.body.classList.add('print-preview-mode');
+    document.getElementById('previewBar').style.display = 'flex';
+    window.onafterprint = null;
+  };
+}
+
+// ===================== SELLO DIGITAL =====================
+const ESTADOS_SELLO_DOFFA = {
+    RECIBIDO:  'Recepción conforme según verificación de folios escaneados',
+    RECHAZADO: 'Mercancía rechazada en recepción según verificación de folios',
+    OBSERVADO: 'Recepción con observaciones, pendiente de revisión y conformidad'
+};
+let estadoSelloDoffaActual = 'RECIBIDO';
+
+function pintarBotonesSelloDoffa() {
+    document.querySelectorAll('.sello-btn[data-sello]').forEach(b => {
+        const activo = b.dataset.sello === estadoSelloDoffaActual;
+        b.style.color = activo ? '#fff' : '#000';
+        b.style.backgroundColor = activo ? '#000' : '#fff';
+    });
+}
+
+const MESES_SELLO_DOFFA = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function formatearFechaSelloDoffa() {
+    const d = new Date();
+    return `${d.getDate()} ${MESES_SELLO_DOFFA[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function actualizarSelloDoffa() {
+    const fechaTxt = formatearFechaSelloDoffa();
+    document.querySelectorAll('.sello-stamp').forEach(function(el) {
+        const fEl = el.querySelector('.sello-date');
+        const pEl = el.querySelector('.sello-word');
+        const cEl = el.querySelector('.sello-caption');
+        if (fEl) fEl.innerText = fechaTxt;
+        if (pEl) pEl.innerText = estadoSelloDoffaActual;
+        if (cEl) cEl.innerText = ESTADOS_SELLO_DOFFA[estadoSelloDoffaActual] || '';
+    });
+}
+
+function seleccionarSelloDoffa(estado) {
+    estadoSelloDoffaActual = estado;
+    pintarBotonesSelloDoffa();
+    actualizarSelloDoffa();
+}
+
+function makeSelloDraggableDoffa(el) {
+    if (!el) return;
+    let dragging = false, offsetX = 0, offsetY = 0;
+    function startDrag(x, y) {
+        const rect = el.getBoundingClientRect();
+        const parent = el.offsetParent ? el.offsetParent.getBoundingClientRect() : {left:0, top:0};
+        offsetX = x - rect.left;
+        offsetY = y - rect.top;
+        el.style.left = (rect.left - parent.left) + 'px';
+        el.style.top = (rect.top - parent.top) + 'px';
+        el.style.transform = 'rotate(-1deg) scaleX(1.2)';
+        dragging = true;
+    }
+    function moveDrag(x, y) {
+        if (!dragging) return;
+        const parent = el.offsetParent ? el.offsetParent.getBoundingClientRect() : {left:0, top:0};
+        el.style.left = (x - offsetX - parent.left) + 'px';
+        el.style.top = (y - offsetY - parent.top) + 'px';
+    }
+    el.addEventListener('mousedown', function (e) { e.preventDefault(); startDrag(e.clientX, e.clientY); });
+    document.addEventListener('mousemove', function (e) { moveDrag(e.clientX, e.clientY); });
+    document.addEventListener('mouseup', function () { dragging = false; });
+    el.addEventListener('touchstart', function (e) { const t = e.touches[0]; startDrag(t.clientX, t.clientY); }, {passive:true});
+    document.addEventListener('touchmove', function (e) { const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }, {passive:true});
+    document.addEventListener('touchend', function () { dragging = false; });
+}
+
+function crearSelloEnHojaDoffa(hoja, idx) {
+    const div = document.createElement('div');
+    div.className = 'sello-stamp';
+    div.id = 'selloStampDoffa' + idx;
+    div.style.cssText = 'top:8px;left:50%;transform:translateX(-50%) rotate(-1deg) scaleX(1.2)';
+    div.innerHTML = `
+        <div class="sello-title">Home Delivery</div>
+        <div class="sello-sub">Recepción DOFFA</div>
+        <div class="sello-date"></div>
+        <div class="sello-word">RECIBIDO</div>
+        <div class="sello-caption"></div>
+    `;
+    hoja.appendChild(div);
+    return div;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    pintarBotonesSelloDoffa();
+    document.querySelectorAll('.sello-hoja').forEach(function(hoja, idx) {
+        const el = crearSelloEnHojaDoffa(hoja, idx + 1);
+        makeSelloDraggableDoffa(el);
+    });
+    actualizarSelloDoffa();
 });
 
 exportBtn.addEventListener('click', () => {
