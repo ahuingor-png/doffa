@@ -282,12 +282,12 @@ table.minimal tfoot td {
 </style>
 <style>
 /* SELLO */
-.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:6px; padding:12px 30px 14px; z-index:50; border:2.5px solid #000; box-shadow:0 0 0 1.5px #000 inset; color:#000; background:#fff}
-.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:19px; letter-spacing:0.5px; text-transform:uppercase; white-space:nowrap}
-.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:9px; letter-spacing:2.5px; text-transform:uppercase; margin-top:2px; white-space:nowrap}
-.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:12.5px; margin-top:7px; white-space:nowrap}
-.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:40px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.15) scaleY(1.05); margin-top:6px; white-space:nowrap}
-.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:6.5px; letter-spacing:0.3px; text-transform:uppercase; line-height:1.2; margin-top:7px; width:220px; margin-left:auto; margin-right:auto}
+.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:6px; padding:6px 22px 7px; z-index:50; border:2px solid #000; box-shadow:0 0 0 1.5px #000 inset; color:#000; background:#fff; width:230px}
+.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:13px; letter-spacing:0.4px; text-transform:uppercase; white-space:nowrap}
+.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:6.5px; letter-spacing:2px; text-transform:uppercase; margin-top:1px; white-space:nowrap}
+.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:9px; margin-top:3px; white-space:nowrap}
+.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:25px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.1); margin-top:3px; white-space:nowrap}
+.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:5.5px; letter-spacing:0.2px; text-transform:uppercase; line-height:1.15; margin-top:4px; width:190px; margin-left:auto; margin-right:auto}
 .sello-btn{padding:8px 10px;border-radius:8px;font-size:9px;font-weight:800;text-transform:uppercase;border:2px solid #000;background:#fff;color:#000;cursor:pointer}
 .preview-bar{position:fixed;top:0;left:0;right:0;background:#111827;color:#fff;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;font-size:12px;z-index:10000;font-family:Arial,sans-serif}
 .preview-bar button{border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;margin-left:8px}
@@ -718,12 +718,18 @@ function normalizarTexto(s) {
     .trim();
 }
 
-// Busca, dentro de las llaves de una fila, la primera que contenga alguna de las palabras clave
+// Busca, dentro de las llaves de una fila, la columna que mejor coincida con las palabras clave.
+// Recorre las palabras clave EN ORDEN DE PRIORIDAD (la primera de la lista gana si aparece en
+// cualquier columna), en vez de tomar la primera columna que aparezca en la fila. Esto evita que,
+// por ejemplo, "N° ORDEN / N° FOLIO" (que contiene "ORDEN" y "FOLIO") se elija por error en lugar
+// de "N° PALET" solo porque aparece antes en el Excel.
 function encontrarColumna(row, palabrasClave) {
   const claves = Object.keys(row);
-  for (const clave of claves) {
-    const norm = normalizarTexto(clave);
-    if (palabrasClave.some(p => norm.includes(p))) return clave;
+  for (const p of palabrasClave) {
+    for (const clave of claves) {
+      const norm = normalizarTexto(clave);
+      if (norm.includes(p)) return clave;
+    }
   }
   return null;
 }
