@@ -282,12 +282,12 @@ table.minimal tfoot td {
 </style>
 <style>
 /* SELLO */
-.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:6px; padding:6px 22px 7px; z-index:50; border:2px solid #000; box-shadow:0 0 0 1.5px #000 inset; color:#000; background:#fff; width:230px}
-.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:13px; letter-spacing:0.4px; text-transform:uppercase; white-space:nowrap}
-.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:6.5px; letter-spacing:2px; text-transform:uppercase; margin-top:1px; white-space:nowrap}
-.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:9px; margin-top:3px; white-space:nowrap}
-.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:25px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.1); margin-top:3px; white-space:nowrap}
-.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:5.5px; letter-spacing:0.2px; text-transform:uppercase; line-height:1.15; margin-top:4px; width:190px; margin-left:auto; margin-right:auto}
+.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:2.5px; padding:1.5px 3px; z-index:50; border:1px solid #000; box-shadow:0 0 0 0.8px #000 inset; color:#000; background:#fff; width:38mm; height:14mm; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center}
+.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:5.6px; letter-spacing:0.15px; text-transform:uppercase; white-space:nowrap; line-height:1.05}
+.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:2.9px; letter-spacing:0.8px; text-transform:uppercase; margin-top:0.4px; white-space:nowrap; line-height:1.05}
+.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:4.4px; margin-top:0.8px; white-space:nowrap; line-height:1.05}
+.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:11px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.1); margin-top:0.8px; white-space:nowrap}
+.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:2.4px; letter-spacing:0.1px; text-transform:uppercase; line-height:1.1; margin-top:1.2px; width:92%; margin-left:auto; margin-right:auto}
 .sello-btn{padding:8px 10px;border-radius:8px;font-size:9px;font-weight:800;text-transform:uppercase;border:2px solid #000;background:#fff;color:#000;cursor:pointer}
 .preview-bar{position:fixed;top:0;left:0;right:0;background:#111827;color:#fff;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;font-size:12px;z-index:10000;font-family:Arial,sans-serif}
 .preview-bar button{border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;margin-left:8px}
@@ -370,10 +370,15 @@ body.print-preview-mode .doc-simple{display:block !important}
 </div>
 </div>
 <div class="flex flex-wrap gap-3 items-center">
-<div style="display:flex;gap:4px" class="no-print">
+<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap" class="no-print">
   <button class="sello-btn" data-sello="RECIBIDO" onclick="seleccionarSelloDoffa('RECIBIDO')">RECIBIDO</button>
   <button class="sello-btn" data-sello="RECHAZADO" onclick="seleccionarSelloDoffa('RECHAZADO')">RECHAZADO</button>
   <button class="sello-btn" data-sello="OBSERVADO" onclick="seleccionarSelloDoffa('OBSERVADO')">OBSERVADO</button>
+  <button class="sello-btn" data-sello="DESPACHADO" onclick="seleccionarSelloDoffa('DESPACHADO')">DESPACHADO</button>
+  <label style="display:flex;align-items:center;gap:5px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;margin-left:6px;cursor:pointer">
+    <input id="ocultarSelloCheck" onchange="toggleSelloVisibilidadDoffa(this.checked)" style="width:14px;height:14px;cursor:pointer" type="checkbox"/>
+    Sin sello
+  </label>
 </div>
 <button class="btn-secondary bg-slate-600 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2" id="printBtn">
 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1120,9 +1125,10 @@ function confirmPrintDoffa() {
 
 // ===================== SELLO DIGITAL =====================
 const ESTADOS_SELLO_DOFFA = {
-    RECIBIDO:  'Recepción conforme según verificación de folios escaneados',
-    RECHAZADO: 'Mercancía rechazada en recepción según verificación de folios',
-    OBSERVADO: 'Recepción con observaciones, pendiente de revisión y conformidad'
+    RECIBIDO:   'Recepción conforme según verificación de folios escaneados',
+    RECHAZADO:  'Mercancía rechazada en recepción según verificación de folios',
+    OBSERVADO:  'Recepción con observaciones, pendiente de revisión y conformidad',
+    DESPACHADO: 'Mercancía despachada conforme según verificación de folios'
 };
 let estadoSelloDoffaActual = 'RECIBIDO';
 
@@ -1156,6 +1162,12 @@ function seleccionarSelloDoffa(estado) {
     estadoSelloDoffaActual = estado;
     pintarBotonesSelloDoffa();
     actualizarSelloDoffa();
+}
+
+function toggleSelloVisibilidadDoffa(oculto) {
+    document.querySelectorAll('.sello-stamp').forEach(function(el) {
+        el.style.display = oculto ? 'none' : '';
+    });
 }
 
 function makeSelloDraggableDoffa(el) {
