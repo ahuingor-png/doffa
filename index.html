@@ -46,6 +46,7 @@ setTimeout(initHist, 300);
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -282,12 +283,12 @@ table.minimal tfoot td {
 </style>
 <style>
 /* SELLO */
-.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:2.5px; padding:1.5px 3px; z-index:50; border:1px solid #000; box-shadow:0 0 0 0.8px #000 inset; color:#000; background:#fff; width:38mm; height:14mm; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center}
-.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:5.6px; letter-spacing:0.15px; text-transform:uppercase; white-space:nowrap; line-height:1.05}
-.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:2.9px; letter-spacing:0.8px; text-transform:uppercase; margin-top:0.4px; white-space:nowrap; line-height:1.05}
-.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:4.4px; margin-top:0.8px; white-space:nowrap; line-height:1.05}
-.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:11px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.1); margin-top:0.8px; white-space:nowrap}
-.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:2.4px; letter-spacing:0.1px; text-transform:uppercase; line-height:1.1; margin-top:1.2px; width:92%; margin-left:auto; margin-right:auto}
+.sello-stamp{position:absolute; text-align:center; cursor:move; user-select:none; -webkit-user-select:none; mix-blend-mode:multiply; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:5px; padding:3px 6px; z-index:50; border:1px solid #000; box-shadow:0 0 0 1.5px #000 inset; color:#000; background:#fff; width:56.667mm; height:34mm; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:space-evenly; align-items:center}
+.sello-stamp .sello-title{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:900; font-size:10.6px; letter-spacing:0.3px; text-transform:uppercase; white-space:nowrap; line-height:1.05}
+.sello-stamp .sello-sub{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:5.5px; letter-spacing:1.5px; text-transform:uppercase; margin-top:0.8px; white-space:nowrap; line-height:1.05}
+.sello-stamp .sello-date{font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-weight:700; font-size:8.4px; margin-top:1.5px; white-space:nowrap; line-height:1.05}
+.sello-stamp .sello-word{font-family:'Times New Roman',Times,'Noto Serif',Georgia,serif; font-weight:900; font-size:20.9px; letter-spacing:-0.02em; line-height:0.85; transform:scaleX(1.1); margin-top:1.5px; white-space:nowrap}
+.sello-stamp .sello-caption{font-family:Arial,sans-serif; font-weight:600; font-size:4.6px; letter-spacing:0.2px; text-transform:uppercase; line-height:1.1; margin-top:2.3px; width:92%; margin-left:auto; margin-right:auto}
 .sello-btn{padding:8px 10px;border-radius:8px;font-size:9px;font-weight:800;text-transform:uppercase;border:2px solid #000;background:#fff;color:#000;cursor:pointer}
 .preview-bar{position:fixed;top:0;left:0;right:0;background:#111827;color:#fff;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;font-size:12px;z-index:10000;font-family:Arial,sans-serif}
 .preview-bar button{border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;margin-left:8px}
@@ -549,11 +550,24 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const rtdbSync = firebase.database();
+// Auth anónima: requerida por las Reglas de Firebase (auth != null).
+// authListo se resuelve (con o sin éxito) antes de conectar la sincronización.
+window.authListo = firebase.auth().signInAnonymously().catch(err => {
+  console.error("Error de auth anónima:", err);
+  window.errorAuthSync = (err && (err.code || err.message)) || 'desconocido';
+});
 let syncRef=null, syncCode='', aplicandoRemoto=false, guardarRemotoTimeout=null;
 
 function limpiarCodigoSync(c){ return (c||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'_'); }
 
 function conectarSync(){
+  var st=document.getElementById('syncStatus'); if(st) st.innerHTML='🟡 Iniciando sesión…';
+  window.authListo.then(function(){
+    if(window.errorAuthSync){ var st2=document.getElementById('syncStatus'); if(st2) st2.innerHTML='🔴 Auth falló: '+window.errorAuthSync; }
+    _conectarSync();
+  });
+}
+function _conectarSync(){
   const codigo = limpiarCodigoSync(document.getElementById('f_sync_code').value);
   if(!codigo){ alert('Escribe un código de sincronización (el mismo en ambos dispositivos).'); return; }
   desconectarSync();
