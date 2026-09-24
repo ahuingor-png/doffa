@@ -423,6 +423,16 @@ body.print-preview-mode .doc-simple{display:block !important}
         </label>
         <input accept=".xlsx,.xls,.csv" class="hidden" id="fileInput" type="file"/>
 
+        <label id="dropZoneTMS" for="fileInputTMS" style="border:2px dashed #cbd5e1; border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; text-align:center; background:#f8fafc; transition:background .15s,border-color .15s;">
+          <svg class="h-6 w-6" style="color:#475569" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          <div style="font-weight:600;font-size:13px;color:#334155">Cargar Base TMS</div>
+          <div style="font-size:11px;color:#94a3b8">Excel con RASTREO / ESTADO_TMS</div>
+        </label>
+        <input accept=".xlsx,.xls,.csv" class="hidden" id="fileInputTMS" type="file"/>
+        <div id="dbTmsStatus" style="font-size:11px;font-weight:600;color:#2563eb;margin-top:-4px;"></div>
+
         <button class="opt-btn" id="exportBtn">
           <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -440,6 +450,12 @@ body.print-preview-mode .doc-simple{display:block !important}
             <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
           </svg>
           Borrar Base de Datos
+        </button>
+        <button class="opt-btn opt-btn-danger" id="clearTmsDbBtn">
+          <svg class="h-5 w-5 opt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          Borrar Base TMS
         </button>
       </div>
 
@@ -537,6 +553,7 @@ document.getElementById('opcionesModal').addEventListener('click', function(e){
 <script>
 // VARIABLES GLOBALES
 let masterDB = [];
+let masterTMS = [];
 let scannedRecords = [];
 
 /* ===== SINCRONIZACIÓN FIREBASE (entre celular y laptop) ===== */
@@ -616,7 +633,7 @@ function empujarEstadoRemoto(){
   guardarRemotoTimeout = setTimeout(()=>{
     try{
       syncRef.set({
-        masterDB, scannedRecords,
+        masterDB, masterTMS, scannedRecords,
         transporte: document.getElementById('transporte').value,
         placa: document.getElementById('placa').value,
         responsable: document.getElementById('responsable').value,
@@ -630,14 +647,17 @@ function aplicarEstadoRemoto(d){
   aplicandoRemoto = true;
   try{
     masterDB = d.masterDB || [];
+    masterTMS = d.masterTMS || [];
     scannedRecords = d.scannedRecords || [];
     if(typeof d.transporte==='string') document.getElementById('transporte').value = d.transporte;
     if(typeof d.placa==='string') document.getElementById('placa').value = d.placa;
     if(typeof d.responsable==='string') document.getElementById('responsable').value = d.responsable;
     if(typeof d.puerta==='string') document.getElementById('puerta').value = d.puerta;
     localStorage.setItem('doffa_masterDB', JSON.stringify(masterDB));
+    localStorage.setItem('doffa_masterTMS', JSON.stringify(masterTMS));
     localStorage.setItem('doffa_scannedRecords', JSON.stringify(scannedRecords));
     updateDBStatus(masterDB.length ? `Base cargada: ${masterDB.length} registros (sincronizada)` : 'Esperando carga de base de datos (0 registros)', masterDB.length ? 'success' : 'info');
+    updateDBTmsStatus(masterTMS.length ? `Base TMS cargada: ${masterTMS.length} registros (sincronizada)` : 'Esperando carga de base TMS (0 registros)', masterTMS.length ? 'success' : 'info');
     renderTable();
   } finally {
     setTimeout(()=>{ aplicandoRemoto=false; }, 50);
@@ -657,19 +677,23 @@ const puertaInput = document.getElementById('puerta');
 const folioInput = document.getElementById('folioInput');
 const scanBtn = document.getElementById('scanBtn');
 const fileInput = document.getElementById('fileInput');
+const fileInputTMS = document.getElementById('fileInputTMS');
 const printBtn = document.getElementById('printBtn');
 const exportBtn = document.getElementById('exportBtn');
 const clearBtn = document.getElementById('clearBtn');
 const clearDbBtn = document.getElementById('clearDbBtn');
+const clearTmsDbBtn = document.getElementById('clearTmsDbBtn');
 const tableBody = document.getElementById('mainTableBody');
 const totalBultosEl = document.getElementById('totalBultos');
 const dbStatusEl = document.getElementById('dbStatus');
+const dbTmsStatusEl = document.getElementById('dbTmsStatus');
 const emptyState = document.getElementById('emptyState');
 
 // INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
   loadFromLocalStorage();
   initMasterDB();
+  initMasterTMS();
   renderTable();
   updateDateTime();
   setInterval(updateDateTime, 60000);
@@ -726,6 +750,35 @@ function updateDBStatus(msg, type = 'info') {
   const colors = { success: 'text-emerald-600', error: 'text-red-600', info: 'text-blue-600' };
   dbStatusEl.className = `mt-4 text-sm font-medium ${colors[type]}`;
   dbStatusEl.textContent = msg;
+}
+
+function initMasterTMS() {
+  const savedTMS = localStorage.getItem('doffa_masterTMS');
+  if (savedTMS) {
+    masterTMS = JSON.parse(savedTMS);
+    updateDBTmsStatus(`Base TMS cargada: ${masterTMS.length} registros`, 'success');
+  } else {
+    updateDBTmsStatus(`Esperando carga de base TMS (0 registros)`, 'info');
+  }
+}
+
+function updateDBTmsStatus(msg, type = 'info') {
+  const colors = { success: 'text-emerald-600', error: 'text-red-600', info: 'text-blue-600' };
+  if (!dbTmsStatusEl) return;
+  dbTmsStatusEl.className = colors[type];
+  dbTmsStatusEl.textContent = msg;
+}
+
+// Busca el ESTADO_TMS correspondiente a un folio/rastreo escaneado dentro de masterTMS.
+// Devuelve el estado tal cual viene en el Excel, o null si no hay coincidencia.
+function buscarEstadoTMS(folioStr) {
+  if (!masterTMS.length) return null;
+  const objetivo = String(folioStr || '').trim();
+  if (!objetivo) return null;
+  const item = masterTMS.find(r => String(r['RASTREO'] || '').trim() === objetivo);
+  if (!item) return null;
+  const estado = item['ESTADO_TMS'];
+  return (estado === undefined || estado === null || String(estado).trim() === '') ? null : String(estado).trim();
 }
 
 // CARGA DE EXCEL
@@ -822,6 +875,115 @@ function procesarArchivoExcel(file) {
 
 fileInput.addEventListener('change', (e) => {
   procesarArchivoExcel(e.target.files[0]);
+});
+
+// CARGA DE EXCEL TMS (RASTREO / ESTADO_TMS)
+function procesarArchivoTMS(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // 1) Buscar la fila real de encabezados
+      const filas = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+      let idxEncabezado = filas.findIndex(fila =>
+        fila.some(celda => {
+          const n = normalizarTexto(celda);
+          return n.includes('RASTREO') || n.includes('ESTADO_TMS') || n.includes('ESTADO TMS') || n.includes('PALET') || n.includes('FOLIO');
+        })
+      );
+      if (idxEncabezado === -1) idxEncabezado = 0;
+
+      // 2) Reconstruir usando esa fila como encabezado real
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { range: idxEncabezado, defval: '' });
+
+      if (!jsonData.length) {
+        updateDBTmsStatus('El archivo no tiene filas de datos debajo del encabezado', 'error');
+        fileInputTMS.value = '';
+        return;
+      }
+
+      // 3) Detectar columnas por palabras clave, tolerando tildes/mayúsculas/símbolos
+      const colRastreo = encontrarColumna(jsonData[0], ['RASTREO', 'PALET', 'FOLIO', 'ORDEN', 'GUIA']);
+      const colEstado = encontrarColumna(jsonData[0], ['ESTADO_TMS', 'ESTADO TMS', 'ESTADOTMS', 'ESTADO']);
+
+      if (!colRastreo) {
+        const encabezadosVistos = Object.keys(jsonData[0]).join(', ');
+        updateDBTmsStatus(`No se encontró una columna de RASTREO / FOLIO. Encabezados detectados: ${encabezadosVistos}`, 'error');
+        fileInputTMS.value = '';
+        return;
+      }
+      if (!colEstado) {
+        const encabezadosVistos = Object.keys(jsonData[0]).join(', ');
+        updateDBTmsStatus(`No se encontró una columna de ESTADO_TMS. Encabezados detectados: ${encabezadosVistos}`, 'error');
+        fileInputTMS.value = '';
+        return;
+      }
+
+      masterTMS = jsonData.map(row => {
+        const rastreo = colRastreo ? row[colRastreo] : undefined;
+        const estado = colEstado ? row[colEstado] : undefined;
+        return { 'RASTREO': rastreo, 'ESTADO_TMS': estado };
+      }).filter(r => r['RASTREO'] !== undefined && String(r['RASTREO']).trim() !== '');
+
+      if (!masterTMS.length) {
+        updateDBTmsStatus('Se encontraron las columnas pero todas sus filas están vacías', 'error');
+        fileInputTMS.value = '';
+        return;
+      }
+
+      localStorage.setItem('doffa_masterTMS', JSON.stringify(masterTMS));
+      updateDBTmsStatus(`Base TMS cargada: ${masterTMS.length} registros`, 'success');
+      empujarEstadoRemoto();
+      fileInputTMS.value = '';
+      showToast('Base TMS cargada correctamente', 'success');
+    } catch (err) {
+      updateDBTmsStatus('Error al leer el archivo: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+fileInputTMS.addEventListener('change', (e) => {
+  procesarArchivoTMS(e.target.files[0]);
+});
+
+// ARRASTRAR Y SOLTAR EXCEL TMS
+const dropZoneTMS = document.getElementById('dropZoneTMS');
+if (dropZoneTMS) {
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZoneTMS.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZoneTMS.style.borderColor = '#16a34a';
+      dropZoneTMS.style.background = '#f0fdf4';
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZoneTMS.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZoneTMS.style.borderColor = '#cbd5e1';
+      dropZoneTMS.style.background = '#f8fafc';
+    });
+  });
+  dropZoneTMS.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) procesarArchivoTMS(file);
+  });
+}
+
+clearTmsDbBtn.addEventListener('click', () => {
+  if (confirm('¿Borrar Base TMS?')) {
+    localStorage.removeItem('doffa_masterTMS');
+    masterTMS = [];
+    updateDBTmsStatus(`Esperando carga de base TMS (0 registros)`, 'info');
+    empujarEstadoRemoto();
+  }
 });
 
 // ARRASTRAR Y SOLTAR EXCEL
@@ -961,7 +1123,7 @@ function agregarDirecto(folioStr, cantidad, motivo, found) {
     bultos: cantidad,
     motivo: motivoFinal,
     tipo: tipoFinal,
-    tms: 'SIN REGISTRO',
+    tms: buscarEstadoTMS(folioStr) || 'SIN ESTADO TMS',
     fecha: getTodayDate()
   };
   scannedRecords.push(newRecord);
@@ -1016,7 +1178,7 @@ function confirmarModal() {
       bultos: cantidad,
       motivo: motivoFinal,
       tipo: tipoFinal,
-      tms: 'SIN REGISTRO',
+      tms: buscarEstadoTMS(pendingFolio) || 'SIN ESTADO TMS',
       fecha: getTodayDate()
     };
     scannedRecords.push(newRecord);
