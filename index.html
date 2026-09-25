@@ -194,6 +194,10 @@ body.dark-mode .dt-title {
 body.dark-mode .dt-divider {
     background-color: #374151 !important;
 }
+.tms-cell{cursor:text; outline:none;}
+.tms-cell:hover{background:#f1f5f9;}
+.tms-cell:focus{background:#eff6ff; box-shadow:inset 0 0 0 1px #93c5fd;}
+@media print{ .tms-cell{background:transparent !important; box-shadow:none !important;} }
 body.dark-mode .dt-label {
     color: #9ca3af !important;
 }
@@ -1202,6 +1206,14 @@ document.addEventListener('keydown', (e) => {
 
 // RENDERIZADO
 
+function actualizarTMS(celda) {
+  const idx = parseInt(celda.getAttribute('data-idx'));
+  if (isNaN(idx) || !scannedRecords[idx]) return;
+  const nuevoValor = celda.textContent.trim();
+  scannedRecords[idx].tms = nuevoValor;
+  localStorage.setItem('doffa_scannedRecords', JSON.stringify(scannedRecords));
+}
+
 // RENDERIZADO
 function renderTable() {
   tableBody.innerHTML = '';
@@ -1224,7 +1236,7 @@ function renderTable() {
       <td class="px-4 py-3 text-sm text-slate-700 font-mono">${record.folio}</td>
       <td class="px-4 py-3 text-sm text-center font-semibold text-blue-600">${record.bultos}</td>
       <td class="px-4 py-3 text-sm text-slate-700">${record.motivo}</td>
-      <td class="px-4 py-3 text-sm text-slate-600">${record.tms}</td>
+      <td class="px-4 py-3 text-sm text-slate-600 tms-cell" contenteditable="true" data-idx="${idx}" onblur="actualizarTMS(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${record.tms}</td>
       <td class="px-4 py-3 text-sm text-slate-600">${record.fecha}</td>
       <td class="px-4 py-3 text-center no-print">
         <button onclick="deleteRecord(${idx})" class="text-red-500 hover:text-red-700 transition">
