@@ -604,6 +604,8 @@ function _conectarSync(){
     document.getElementById('syncStatus').innerHTML = '🟢 Conectado a "'+codigo+'" · última actualización: '+new Date().toLocaleTimeString();
     const d = snap.val();
     if(d){ aplicarEstadoRemoto(d); }
+    const nubeSinBase = !d || !d.masterDB || !d.masterDB.length;
+    if(nubeSinBase && (masterDB.length || masterTMS.length || scannedRecords.length)){ empujarEstadoRemoto(); }
   }, err => {
     document.getElementById('syncStatus').innerHTML = '🔴 Error de conexión: '+err.message;
   });
@@ -631,28 +633,41 @@ function borrarNube(){
   });
 }
 
+function limpiarParaFirebase(o){
+  // Quita undefined y elimina caracteres prohibidos en claves (. $ # [ ] /)
+  return JSON.parse(JSON.stringify(o, (k,v)=> v===undefined ? null : v).replace(/"([^"]*[.$#\[\]\/][^"]*)":/g,
+    (m,k)=>'"'+k.replace(/[.$#\[\]\/]/g,'')+'":'));
+}
 function empujarEstadoRemoto(){
   if(!syncRef || aplicandoRemoto) return;
   clearTimeout(guardarRemotoTimeout);
   guardarRemotoTimeout = setTimeout(()=>{
+    const st=document.getElementById('syncStatus');
     try{
-      syncRef.set({
+      const payload = limpiarParaFirebase({
         masterDB, masterTMS, scannedRecords,
         transporte: document.getElementById('transporte').value,
         placa: document.getElementById('placa').value,
         responsable: document.getElementById('responsable').value,
         puerta: document.getElementById('puerta').value
       });
-    }catch(e){}
+      syncRef.set(payload).then(()=>{
+        if(st) st.innerHTML='🟢 Conectado a "'+syncCode+'" · ✅ subido '+new Date().toLocaleTimeString();
+      }).catch(e=>{
+        if(st) st.innerHTML='🔴 Error al subir: '+e.message;
+      });
+    }catch(e){
+      if(st) st.innerHTML='🔴 Error al preparar datos: '+e.message;
+    }
   }, 700);
 }
 
 function aplicarEstadoRemoto(d){
   aplicandoRemoto = true;
   try{
-    masterDB = d.masterDB || [];
-    masterTMS = d.masterTMS || [];
-    scannedRecords = d.scannedRecords || [];
+    if(d.masterDB && d.masterDB.length) masterDB = d.masterDB;
+    if(d.masterTMS && d.masterTMS.length) masterTMS = d.masterTMS;
+    if(d.scannedRecords) scannedRecords = d.scannedRecords;
     if(typeof d.transporte==='string') document.getElementById('transporte').value = d.transporte;
     if(typeof d.placa==='string') document.getElementById('placa').value = d.placa;
     if(typeof d.responsable==='string') document.getElementById('responsable').value = d.responsable;
@@ -857,7 +872,7 @@ function procesarArchivoExcel(file) {
         const folio = colFolio ? row[colFolio] : undefined;
         const cant = colCant ? row[colCant] : undefined;
         const motivo = colMotivo ? row[colMotivo] : undefined;
-        return { 'N° PALET': folio, 'CANT.': cant, 'MOTIVO (RECHAZO)': motivo };
+        return { 'N° PALET': folio ?? '', 'CANT': cant ?? '', 'MOTIVO (RECHAZO)': motivo ?? '' };
       }).filter(r => r['N° PALET'] !== undefined && String(r['N° PALET']).trim() !== '');
 
       if (!masterDB.length) {
@@ -931,7 +946,7 @@ function procesarArchivoTMS(file) {
       masterTMS = jsonData.map(row => {
         const rastreo = colRastreo ? row[colRastreo] : undefined;
         const estado = colEstado ? row[colEstado] : undefined;
-        return { 'RASTREO': rastreo, 'ESTADO_TMS': estado };
+        return { 'RASTREO': rastreo ?? '', 'ESTADO_TMS': estado ?? '' };
       }).filter(r => r['RASTREO'] !== undefined && String(r['RASTREO']).trim() !== '');
 
       if (!masterTMS.length) {
@@ -1099,7 +1114,7 @@ function procesarFolio() {
   let motivoDB = 'SIN REGISTRO TMS';
 
   if (found) {
-    cantDB = parseInt(found['CANT.']) || 1;
+    cantDB = parseInt(found['CANT'] ?? found['CANT.']) || 1;
     motivoDB = found['MOTIVO (RECHAZO)'] || found['MOTIVO'] || '';
   }
 
